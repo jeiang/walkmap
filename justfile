@@ -32,3 +32,13 @@ import:
     DATABASE_URL={{db_url}} go run . import osm data/places.json
     DATABASE_URL={{db_url}} go run . import overture data/overture.csv
     DATABASE_URL={{db_url}} go run . import dedupe
+
+# Run the API service against the local postgres (db-start first).
+# Override VALHALLA_URL in the environment to point at a running Valhalla.
+serve:
+    DATABASE_URL={{db_url}} VALHALLA_URL={{env_var_or_default("VALHALLA_URL", "http://127.0.0.1:8002")}} go run . serve
+
+# Build Valhalla tiles from data/barbados.osm.pbf. Linux only: nixpkgs'
+# valhalla has no darwin build (see valhalla/build-tiles.sh).
+build-tiles:
+    valhalla/build-tiles.sh data/barbados.osm.pbf data/valhalla
