@@ -17,7 +17,7 @@
         pname = "walkmap";
         version = "0.1.0";
         src = ./.;
-        vendorHash = "sha256-i5x5ILFLqSnd0FDEC+wJBdj/f95K+aB9fIEBPxd2ZiA=";
+        vendorHash = "sha256-A27PFU7deapXlRQZgrEZi0PNcHLgvlNfBh5bSoH/Fz8=";
       };
       default = walkmap;
     });
