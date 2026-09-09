@@ -1,0 +1,28 @@
+Vendored assets under frontend/public/style/, fetched at commit time (not
+at runtime -- docs/WALKMAP.md piece 3 requires no third-party requests from
+the built app):
+
+- style.json: OSM Bright GL style, from
+  https://github.com/openmaptiles/osm-bright-gl-style (BSD 3-Clause).
+  sources/glyphs/sprite were rewritten to local/relative paths (see below);
+  no other changes.
+
+- sprite/sprite*.{json,png}: the same OSM Bright style's sprite sheet,
+  from https://openmaptiles.github.io/osm-bright-gl-style/sprite* (BSD
+  3-Clause, same project as the style).
+
+- glyphs/Noto Sans {Regular,Bold,Italic}/{0-255,256-511}.pbf: SDF glyph
+  PBFs for the Noto Sans family (the three "text-font" stacks the style
+  uses), fetched from MapLibre's public demo glyph server
+  (https://demotiles.maplibre.org/font/), which serves the same
+  github.com/openmaptiles/fonts glyph set (SIL Open Font License 1.1).
+  Only the Basic Latin + Latin-1 Supplement (0-255) and Latin Extended-A
+  (256-511) ranges are kept -- enough for English/Latin place names: the
+  full multi-script set is well over the 20MB budget noted in
+  docs/WALKMAP.md.
+
+OSM Bright / openmaptiles license text:
+https://github.com/openmaptiles/osm-bright-gl-style/blob/master/LICENSE.md
+
+openmaptiles/fonts (OFL) license text:
+https://github.com/openmaptiles/fonts/blob/master/noto-sans/LICENSE
