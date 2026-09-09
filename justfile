@@ -47,3 +47,12 @@ build-tiles:
 # see basemap/build-pmtiles.sh for the coastline cache and bbox knobs).
 build-basemap:
     basemap/build-pmtiles.sh data/barbados.osm.pbf data/basemap
+
+# Install frontend deps and build frontend/dist.
+build-frontend:
+    cd frontend && npm install && npm run build
+
+# Vite dev server on :5173, proxying /api and /basemap.pmtiles to a
+# `just serve` running on 127.0.0.1:8867.
+dev:
+    cd frontend && npm install && npm run dev

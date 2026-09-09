@@ -37,6 +37,7 @@
           pkgs.just
           pkgs.tilemaker
           pkgs.pmtiles
+          pkgs.nodejs_24
         ];
       };
     });

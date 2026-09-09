@@ -2,14 +2,14 @@
 
 Category search by walking time for Barbados. This repo currently holds
 pieces 1-3 of the plan: the PostGIS schema and OSM/Overture import
-pipeline, the Valhalla tiles + Go API service, and the basemap build (the
-frontend SPA lands in a follow-up commit). See `docs/WALKMAP.md` in the
-`cornn-flaek` flake repo for the full design.
+pipeline, the Valhalla tiles + Go API service, and the basemap build +
+MapLibre SPA. See `docs/WALKMAP.md` in the `cornn-flaek` flake repo for
+the full design.
 
 ## Requirements
 
 `nix develop` provides everything: Go, PostgreSQL 17 + PostGIS, DuckDB,
-osmium-tool, curl, jq, tilemaker, pmtiles.
+osmium-tool, curl, jq, tilemaker, pmtiles, Node 24 (with npm).
 
 ## Running the import locally
 
@@ -93,7 +93,7 @@ Endpoints:
 - `GET /basemap.pmtiles` — serves the file at `WALKMAP_BASEMAP` with Range
   support (`http.ServeFile`), needed by the PMTiles JS client. Lives
   outside `WALKMAP_STATIC_DIR`: it's data, rebuilt nightly, not part of
-  the SPA build (piece 3 adds the consumer).
+  the SPA build.
 
 ## Basemap
 
@@ -112,3 +112,21 @@ skipped fetch doesn't fail the build, it just omits ocean fill.
 tilemaker also requires it whenever a shapefile source is in play (i.e.
 whenever the coastline cache is present), so pass Barbados's bbox
 (`-59.70,13.02,-59.38,13.36`) for a real build.
+
+## Frontend
+
+`frontend/` is a vite + vanilla TypeScript SPA (MapLibre GL JS + the
+PMTiles protocol). No runtime requests to third-party hosts: the
+OpenMapTiles-schema style, its sprite, and Latin-range glyph PBFs are
+vendored under `frontend/public/style/` (see `LICENSE` there) and the
+basemap comes from this server's own `/basemap.pmtiles`.
+
+```
+just build-frontend   # npm install && npm run build -> frontend/dist
+just dev               # vite dev server on :5173, proxying /api and
+                        # /basemap.pmtiles to a `just serve` on 127.0.0.1:8867
+```
+
+`frontend/dist` is a flat static directory, servable via
+`WALKMAP_STATIC_DIR` and meant to be `embed`-ded into the Go binary in
+piece 4.
