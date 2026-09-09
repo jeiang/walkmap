@@ -34,6 +34,7 @@
           pkgs.osmium-tool
           pkgs.curl
           pkgs.jq
+          pkgs.just
         ];
       };
     });
