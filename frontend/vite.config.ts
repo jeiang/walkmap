@@ -12,5 +12,9 @@ export default defineConfig({
   },
   build: {
     outDir: "dist",
+    // main.ts uses a top-level await to resolve the vendored style's
+    // glyphs/sprite URLs before creating the map; es2022 covers every
+    // evergreen mobile/desktop browser this app targets.
+    target: "es2022",
   },
 });

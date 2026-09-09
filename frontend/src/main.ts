@@ -6,12 +6,34 @@ import { CATEGORIES, categoryColor, categoryLabel } from "./taxonomy";
 
 const BRIDGETOWN: [number, number] = [-59.6165, 13.0975]; // [lon, lat]
 
+// maplibre v6 loads its tile/glyph worker from a separate module file,
+// resolved at runtime against its own module URL -- a URL that doesn't
+// survive bundling. scripts/copy-maplibre-worker.mjs (predev/prebuild)
+// copies it, and the sibling chunk it statically imports, to this path.
+maplibregl.setWorkerUrl("/vendor/maplibre/maplibre-gl-worker.mjs");
+
 const protocol = new Protocol();
 maplibregl.addProtocol("pmtiles", protocol.tile);
 
+// maplibre requires a style's glyphs/sprite URLs to be absolute (it
+// resolves them with `new URL(url)`, no base) -- vendored style.json
+// keeps them as origin-relative paths so it works under any origin, dev
+// or prod, and this resolves them against the page's own origin at load
+// time. Still no third-party host: only ever this page's own origin.
+async function loadStyle(path: string): Promise<maplibregl.StyleSpecification> {
+  const style = (await (await fetch(path)).json()) as maplibregl.StyleSpecification;
+  // Plain string concatenation, not `new URL()`: glyphs must keep its
+  // literal "{fontstack}"/"{range}" tokens, which URL() would percent-encode.
+  if (style.glyphs?.startsWith("/")) style.glyphs = window.location.origin + style.glyphs;
+  if (typeof style.sprite === "string" && style.sprite.startsWith("/")) {
+    style.sprite = window.location.origin + style.sprite;
+  }
+  return style;
+}
+
 const map = new maplibregl.Map({
   container: "map",
-  style: "/style/style.json",
+  style: await loadStyle("/style/style.json"),
   center: BRIDGETOWN,
   zoom: 14,
 });
