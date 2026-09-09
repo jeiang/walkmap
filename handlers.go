@@ -102,7 +102,7 @@ func (s *server) handleCategories(w http.ResponseWriter, r *http.Request) {
 type placeResult struct {
 	ID          string   `json:"id"`
 	Source      string   `json:"source"`
-	Name        string   `json:"name"`
+	Name        *string  `json:"name"` // null for the ~12% of OSM rows with no name tag
 	Category    string   `json:"category"`
 	Confidence  *float64 `json:"confidence"`
 	Lat         float64  `json:"lat"`
@@ -148,7 +148,7 @@ func (s *server) handleNearby(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rows, err := s.db.Query(ctx, `
-		select id, source, name, category, confidence, st_y(geom), st_x(geom),
+		select id, source, coalesce(name, ''), category, confidence, st_y(geom), st_x(geom),
 		       st_distance(geom::geography, st_setsrid(st_makepoint($4, $5), 4326)::geography)
 		from places
 		where st_within(geom, st_setsrid(st_geomfromgeojson($1), 4326))
