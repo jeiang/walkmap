@@ -14,6 +14,11 @@ pbf=$1
 out_dir=$2
 
 mkdir -p "$out_dir/builds"
+# Resolve to an absolute path before computing build_dir: `current` is a
+# symlink living inside out_dir, so a relative target would be resolved
+# relative to out_dir itself (double-nesting it) rather than to the
+# invocation directory.
+out_dir=$(cd "$out_dir" && pwd)
 ts=$(date -u +%Y%m%dT%H%M%SZ)
 build_dir="$out_dir/builds/$ts"
 mkdir -p "$build_dir"
