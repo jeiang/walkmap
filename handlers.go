@@ -215,9 +215,13 @@ func scanPlaces(rows pgx.Rows) ([]placeResult, error) {
 	var places []placeResult
 	for rows.Next() {
 		var p placeResult
+		var name string
 		var distanceM float64
-		if err := rows.Scan(&p.ID, &p.Source, &p.Name, &p.Category, &p.Confidence, &p.Lat, &p.Lon, &distanceM); err != nil {
+		if err := rows.Scan(&p.ID, &p.Source, &name, &p.Category, &p.Confidence, &p.Lat, &p.Lon, &distanceM); err != nil {
 			return nil, err
+		}
+		if name != "" {
+			p.Name = &name
 		}
 		p.DistanceM = &distanceM
 		places = append(places, p)
