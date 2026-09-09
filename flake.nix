@@ -35,6 +35,8 @@
           pkgs.curl
           pkgs.jq
           pkgs.just
+          pkgs.tilemaker
+          pkgs.pmtiles
         ];
       };
     });

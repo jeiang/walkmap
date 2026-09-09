@@ -1,14 +1,15 @@
 # walkmap
 
 Category search by walking time for Barbados. This repo currently holds
-pieces 1-2 of the plan: the PostGIS schema and OSM/Overture import
-pipeline, and the Valhalla tiles + Go API service. See `docs/WALKMAP.md`
-in the `cornn-flaek` flake repo for the full design.
+pieces 1-3 of the plan: the PostGIS schema and OSM/Overture import
+pipeline, the Valhalla tiles + Go API service, and the basemap build (the
+frontend SPA lands in a follow-up commit). See `docs/WALKMAP.md` in the
+`cornn-flaek` flake repo for the full design.
 
 ## Requirements
 
 `nix develop` provides everything: Go, PostgreSQL 17 + PostGIS, DuckDB,
-osmium-tool, curl, jq.
+osmium-tool, curl, jq, tilemaker, pmtiles.
 
 ## Running the import locally
 
@@ -68,7 +69,8 @@ Flags/env:
 | `-listen` | `WALKMAP_LISTEN` | `127.0.0.1:8867` |
 | | `DATABASE_URL` | (required) |
 | `-valhalla-url` | `VALHALLA_URL` | `http://127.0.0.1:8002` |
-| `-static-dir` | `WALKMAP_STATIC_DIR` | unset — `/` returns a placeholder until piece 3 adds the SPA |
+| `-static-dir` | `WALKMAP_STATIC_DIR` | unset — `/` returns a placeholder if not set |
+| `-basemap` | `WALKMAP_BASEMAP` | unset — `/basemap.pmtiles` 404s if not set |
 
 The service does its own authentication for nothing: the edge sets
 `X-Remote-User` and the listener must stay on loopback/the mesh only,
@@ -88,3 +90,25 @@ Endpoints:
 - `GET /api/search?q=&lat=&lon=&limit=` — `pg_trgm` name search.
 - `GET /api/route?from_lat=&from_lon=&to_id=` — Valhalla pedestrian route
   to a place by id; decodes Valhalla's polyline6 shape into `[[lat,lon],...]`.
+- `GET /basemap.pmtiles` — serves the file at `WALKMAP_BASEMAP` with Range
+  support (`http.ServeFile`), needed by the PMTiles JS client. Lives
+  outside `WALKMAP_STATIC_DIR`: it's data, rebuilt nightly, not part of
+  the SPA build (piece 3 adds the consumer).
+
+## Basemap
+
+```
+just build-basemap   # -> data/basemap/basemap.pmtiles, from data/barbados.osm.pbf
+```
+
+`basemap/build-pmtiles.sh <pbf> <out-dir> [bbox]` runs tilemaker with its
+bundled OpenMapTiles-compatible config/process over the pbf. The OMT
+"ocean" layer wants the OSM water-polygons shapefile
+(osmdata.openstreetmap.de, ~900MB zipped); it's fetched once into
+`$TILEMAKER_CACHE` (default `<out-dir>/cache`) and reused on rebuilds. Set
+`TILEMAKER_SKIP_COASTLINE=1` to skip the fetch outright — a failed or
+skipped fetch doesn't fail the build, it just omits ocean fill.
+`bbox` (`minlon,minlat,maxlon,maxlat`) restricts the tileset to a region;
+tilemaker also requires it whenever a shapefile source is in play (i.e.
+whenever the coastline cache is present), so pass Barbados's bbox
+(`-59.70,13.02,-59.38,13.36`) for a real build.

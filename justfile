@@ -42,3 +42,8 @@ serve:
 # valhalla has no darwin build (see valhalla/build-tiles.sh).
 build-tiles:
     valhalla/build-tiles.sh data/barbados.osm.pbf data/valhalla
+
+# Build data/basemap/basemap.pmtiles from data/barbados.osm.pbf (tilemaker;
+# see basemap/build-pmtiles.sh for the coastline cache and bbox knobs).
+build-basemap:
+    basemap/build-pmtiles.sh data/barbados.osm.pbf data/basemap
