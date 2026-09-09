@@ -23,6 +23,7 @@ func cmdServe(ctx context.Context, args []string) error {
 	listen := fs.String("listen", getenv("WALKMAP_LISTEN", "127.0.0.1:8867"), "listen address (loopback/mesh only, never expose directly)")
 	valhallaURL := fs.String("valhalla-url", getenv("VALHALLA_URL", "http://127.0.0.1:8002"), "valhalla service base URL")
 	staticDir := fs.String("static-dir", os.Getenv("WALKMAP_STATIC_DIR"), "directory of built SPA assets to serve at / (optional; piece 3)")
+	basemap := fs.String("basemap", os.Getenv("WALKMAP_BASEMAP"), "path to basemap.pmtiles, served at /basemap.pmtiles (optional; piece 3)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -49,6 +50,9 @@ func cmdServe(ctx context.Context, args []string) error {
 	mux.HandleFunc("GET /api/nearby", s.handleNearby)
 	mux.HandleFunc("GET /api/search", s.handleSearch)
 	mux.HandleFunc("GET /api/route", s.handleRoute)
+	if *basemap != "" {
+		mux.HandleFunc("GET /basemap.pmtiles", handleBasemap(*basemap))
+	}
 	if *staticDir != "" {
 		mux.Handle("/", http.FileServer(http.Dir(*staticDir)))
 	} else {
@@ -67,6 +71,15 @@ func getenv(key, def string) string {
 		return v
 	}
 	return def
+}
+
+// handleBasemap serves basemap.pmtiles from disk. It lives outside
+// staticDir (data, rebuilt nightly, not part of the SPA build) but the
+// PMTiles JS client needs Range support, which http.ServeFile provides.
+func handleBasemap(path string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, path)
+	}
 }
 
 func handlePlaceholder(w http.ResponseWriter, r *http.Request) {
