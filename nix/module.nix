@@ -262,12 +262,12 @@ in {
             "${flakePkgs.valhalla-build-tiles}/bin/walkmap-valhalla-build-tiles ${cfg.dataDir}/import/barbados.osm.pbf ${cfg.dataDir}/valhalla"
             "${flakePkgs.build-basemap}/bin/walkmap-build-basemap ${cfg.dataDir}/import/barbados.osm.pbf ${cfg.dataDir}/basemap"
           ];
-          # try-restart, not restart: a Valhalla that was never up (no
-          # prior tiles) has nothing to restart, and this shouldn't start
-          # it outside of walkmap.service's own `wants` ordering. The `+`
+          # restart, not try-restart: on the very first import Valhalla is
+          # inactive (its ConditionPathExists failed at boot), and
+          # try-restart would leave it down until the next boot. The `+`
           # runs it as root, bypassing polkit, same as color-hunt.nix's
           # ExecStartPre pattern.
-          ExecStartPost = "+${pkgs.systemd}/bin/systemctl try-restart walkmap-valhalla.service";
+          ExecStartPost = "+${pkgs.systemd}/bin/systemctl restart walkmap-valhalla.service";
         };
     };
 
