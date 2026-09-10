@@ -142,6 +142,20 @@
         testScript = ''
           machine.wait_for_unit("walkmap-db-init.service")
 
+          # walkmap.service's own ExecStartPre runs `walkmap migrate`
+          # (creates the places table); wait for that before seeding data,
+          # matching the real first-run order (db-init -> migrate -> import
+          # by hand).
+          machine.wait_for_unit("walkmap.service")
+          machine.wait_for_open_port(8867)
+
+          # Valhalla has no tiles in this test (no network to build them,
+          # see docs on the skipped tile build below) so /healthz must
+          # report 503 until an operator builds them.
+          # No -f: curl treats a 503 response itself as failure (exit 22)
+          # and never prints -w's status code, which is what we want here.
+          machine.succeed("curl -s -o /dev/null -w '%{http_code}' http://localhost:8867/healthz | grep -q 503")
+
           # Seed fixture data directly with `walkmap import`, bypassing the
           # network-fetching osm.sh/overture.sh (no network in the VM).
           machine.succeed(
@@ -161,14 +175,6 @@
               "runuser -u walkmap -- env DATABASE_URL='postgres:///walkmap?host=/run/postgresql' "
               + "${self.packages.x86_64-linux.walkmap}/bin/walkmap import overture /var/lib/walkmap/import/overture.csv"
           )
-
-          machine.wait_for_unit("walkmap.service")
-          machine.wait_for_open_port(8867)
-
-          # Valhalla has no tiles in this test (no network to build them,
-          # see docs on the skipped tile build below) so /healthz must
-          # report 503 until an operator builds them.
-          machine.succeed("curl -sf -o /dev/null -w '%{http_code}' http://localhost:8867/healthz | grep -q 503")
 
           machine.succeed("curl -sf http://localhost:8867/api/categories | grep -q convenience")
           machine.succeed("curl -sf 'http://localhost:8867/api/search?q=mini' | grep -q 'Mini Mart'")

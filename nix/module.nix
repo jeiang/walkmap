@@ -154,8 +154,13 @@ in {
     # unprivileged walkmap role and is a no-op once this has run.
     systemd.services.walkmap-db-init = {
       description = "walkmap: create postgis/pg_trgm extensions";
-      after = ["postgresql.service"];
-      requires = ["postgresql.service"];
+      # postgresql.service is just the running server; the `walkmap`
+      # database/role from ensureDatabases/ensureUsers above are created by
+      # the separate postgresql-setup.service (confirmed by the module-eval
+      # VM test: without this, db-init raced it and "database walkmap does
+      # not exist").
+      after = ["postgresql.service" "postgresql-setup.service"];
+      requires = ["postgresql.service" "postgresql-setup.service"];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
@@ -206,6 +211,12 @@ in {
     systemd.services.walkmap-valhalla = {
       description = "walkmap: Valhalla pedestrian routing service";
       after = ["network.target"];
+      # ConditionPathExists is a [Unit]-section key (unitConfig), not a
+      # [Service]-section one -- under serviceConfig systemd silently
+      # ignores it, and the module-eval VM test caught exactly that: the
+      # unit started unconditionally and valhalla_service failed trying to
+      # parse a nonexistent config file as JSON.
+      unitConfig.ConditionPathExists = "${cfg.dataDir}/valhalla/current/valhalla.json";
       serviceConfig =
         commonHardening
         // {
@@ -214,7 +225,6 @@ in {
           Group = cfg.group;
           # No tiles until the first walkmap-import-osm run; don't
           # crash-loop waiting for them.
-          ConditionPathExists = "${cfg.dataDir}/valhalla/current/valhalla.json";
           Restart = "on-failure";
           RestartSec = 5;
           ReadOnlyPaths = ["-${cfg.dataDir}/valhalla"];
