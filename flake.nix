@@ -42,35 +42,38 @@
       linuxOnly = pkgs.lib.optionalAttrs (pkgs.stdenv.hostPlatform.isLinux) {
         inherit (pkgs) valhalla;
 
+        # The scripts start with `#!/usr/bin/env bash` and the hardened
+        # systemd units carry no PATH, so run them through the store bash and
+        # give them coreutils explicitly.
         import-osm = pkgs.writeShellApplication {
           name = "walkmap-import-osm";
-          runtimeInputs = [pkgs.curl pkgs.osmium-tool];
+          runtimeInputs = [pkgs.coreutils pkgs.curl pkgs.osmium-tool];
           text = ''
-            exec ${./import/osm.sh} "$@"
+            exec ${pkgs.bash}/bin/bash ${./import/osm.sh} "$@"
           '';
         };
 
         import-overture = pkgs.writeShellApplication {
           name = "walkmap-import-overture";
-          runtimeInputs = [pkgs.duckdb];
+          runtimeInputs = [pkgs.coreutils pkgs.duckdb];
           text = ''
-            exec ${./import/overture.sh} "$@"
+            exec ${pkgs.bash}/bin/bash ${./import/overture.sh} "$@"
           '';
         };
 
         valhalla-build-tiles = pkgs.writeShellApplication {
           name = "walkmap-valhalla-build-tiles";
-          runtimeInputs = [pkgs.valhalla pkgs.jq];
+          runtimeInputs = [pkgs.coreutils pkgs.valhalla pkgs.jq];
           text = ''
-            exec ${./valhalla/build-tiles.sh} "$@"
+            exec ${pkgs.bash}/bin/bash ${./valhalla/build-tiles.sh} "$@"
           '';
         };
 
         build-basemap = pkgs.writeShellApplication {
           name = "walkmap-build-basemap";
-          runtimeInputs = [pkgs.tilemaker pkgs.curl pkgs.unzip];
+          runtimeInputs = [pkgs.coreutils pkgs.tilemaker pkgs.curl pkgs.unzip];
           text = ''
-            exec ${./basemap/build-pmtiles.sh} "$@"
+            exec ${pkgs.bash}/bin/bash ${./basemap/build-pmtiles.sh} "$@"
           '';
         };
       };
