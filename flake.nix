@@ -100,5 +100,80 @@
         ];
       };
     });
+
+    nixosModules.default = import ./nix/module.nix {inherit self;};
+
+    checks.x86_64-linux = let
+      pkgs = nixpkgs.legacyPackages.x86_64-linux;
+
+      # Cross eval only (docs: nix eval .#checks.x86_64-linux.module-eval.drvPath
+      # works from aarch64-darwin) -- a NixOS system for x86_64-linux can't be
+      # *built* from Darwin, but evaluating one to a derivation is a plain
+      # cross-system eval, no build required.
+      moduleEval = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          self.nixosModules.default
+          {
+            services.walkmap.enable = true;
+            # nixosSystem needs a filesystem for eval-time checks even
+            # though nothing is built.
+            fileSystems."/" = {
+              device = "/dev/null";
+              fsType = "ext4";
+            };
+            boot.loader.grub.enable = false;
+            system.stateVersion = "24.11";
+          }
+        ];
+      };
+    in {
+      module-eval = moduleEval.config.system.build.toplevel;
+
+      vm = pkgs.testers.nixosTest {
+        name = "walkmap-module";
+        nodes.machine = {pkgs, ...}: {
+          imports = [self.nixosModules.default];
+          services.walkmap = {
+            enable = true;
+            listenAddress = "0.0.0.0";
+          };
+        };
+        testScript = ''
+          machine.wait_for_unit("walkmap-db-init.service")
+
+          # Seed fixture data directly with `walkmap import`, bypassing the
+          # network-fetching osm.sh/overture.sh (no network in the VM).
+          machine.succeed(
+              "install -d -o walkmap -g walkmap /var/lib/walkmap/import"
+          )
+          machine.copy_from_host(
+              "${./nix/fixtures/places.json}", "/var/lib/walkmap/import/places.json"
+          )
+          machine.copy_from_host(
+              "${./nix/fixtures/overture.csv}", "/var/lib/walkmap/import/overture.csv"
+          )
+          machine.succeed(
+              "runuser -u walkmap -- env DATABASE_URL='postgres:///walkmap?host=/run/postgresql' "
+              + "${self.packages.x86_64-linux.walkmap}/bin/walkmap import osm /var/lib/walkmap/import/places.json"
+          )
+          machine.succeed(
+              "runuser -u walkmap -- env DATABASE_URL='postgres:///walkmap?host=/run/postgresql' "
+              + "${self.packages.x86_64-linux.walkmap}/bin/walkmap import overture /var/lib/walkmap/import/overture.csv"
+          )
+
+          machine.wait_for_unit("walkmap.service")
+          machine.wait_for_open_port(8867)
+
+          # Valhalla has no tiles in this test (no network to build them,
+          # see docs on the skipped tile build below) so /healthz must
+          # report 503 until an operator builds them.
+          machine.succeed("curl -sf -o /dev/null -w '%{http_code}' http://localhost:8867/healthz | grep -q 503")
+
+          machine.succeed("curl -sf http://localhost:8867/api/categories | grep -q convenience")
+          machine.succeed("curl -sf 'http://localhost:8867/api/search?q=mini' | grep -q 'Mini Mart'")
+        '';
+      };
+    };
   };
 }
