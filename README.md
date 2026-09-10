@@ -1,10 +1,12 @@
 # walkmap
 
 Category search by walking time for Barbados. This repo currently holds
-pieces 1-3 of the plan: the PostGIS schema and OSM/Overture import
-pipeline, the Valhalla tiles + Go API service, and the basemap build +
-MapLibre SPA. See `docs/WALKMAP.md` in the `cornn-flaek` flake repo for
-the full design.
+pieces 1-4 of the plan: the PostGIS schema and OSM/Overture import
+pipeline, the Valhalla tiles + Go API service, the basemap build +
+MapLibre SPA, and the flake's `packages.default`/`packages.frontend` plus
+a `nixosModules.default` for `services.walkmap` (see `nix/README.md`).
+See `docs/WALKMAP.md` in the `cornn-flaek` flake repo for the full
+design.
 
 ## Requirements
 
