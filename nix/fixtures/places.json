@@ -1,0 +1,39 @@
+{
+  "elements": [
+    {
+      "type": "node",
+      "id": 1001,
+      "lat": 13.1,
+      "lon": -59.6,
+      "tags": {"shop": "convenience", "name": "Mini Mart"}
+    },
+    {
+      "type": "node",
+      "id": 1002,
+      "lat": 13.101,
+      "lon": -59.601,
+      "tags": {"shop": "supermarket", "name": "Island Foods"}
+    },
+    {
+      "type": "node",
+      "id": 1003,
+      "lat": 13.102,
+      "lon": -59.602,
+      "tags": {"amenity": "restaurant", "name": "Sea View Grill"}
+    },
+    {
+      "type": "node",
+      "id": 1004,
+      "lat": 13.103,
+      "lon": -59.603,
+      "tags": {"amenity": "cafe", "name": "Corner Cafe"}
+    },
+    {
+      "type": "node",
+      "id": 1005,
+      "lat": 13.104,
+      "lon": -59.604,
+      "tags": {"amenity": "pharmacy", "name": "Bay Pharmacy"}
+    }
+  ]
+}

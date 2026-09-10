@@ -1,0 +1,6 @@
+id,name,category,alt,confidence,src,lon,lat
+ovt-fixture-1,Sunset Bar,bar,,0.9,meta,-59.62,13.11
+ovt-fixture-2,Quick Stop,convenience_store,,0.8,meta,-59.621,13.111
+ovt-fixture-3,Harbor Bakery,bakery,,0.7,meta,-59.622,13.112
+ovt-fixture-4,Palm Cafe,coffee_shop,,0.6,meta,-59.623,13.113
+ovt-fixture-5,Reef Pharmacy,pharmacy,,0.95,meta,-59.624,13.114
